@@ -1,14 +1,30 @@
 <?php include 'init.php'; ?>
 <?php
 $msg='';
-if($_POST){
-    $pid=(int)$_POST['project'];
-    $pn=mysqli_real_escape_string($conn,$_POST['phasename']);
-    $sd=$_POST['start']??'';$ed=$_POST['end']??'';
-    $ord=(int)($_POST['order']??1);
-    $st=mysqli_real_escape_string($conn,$_POST['status']??'Pending');
-    mysqli_query($conn,"INSERT INTO Phases(ProjectID,PhaseName,StartDate,EndDate,PhaseOrder,Status) VALUES($pid,'$pn','$sd','$ed',$ord,'$st')");
-    $msg='success';
+if ($_POST) {
+    $pid = (int)$_POST['project'];
+    $pn  = $_POST['phasename']       ?? '';
+    $sd  = $_POST['start']           ?? '';
+    $ed  = $_POST['end']             ?? '';
+    $ord = (int)($_POST['order']     ?? 1);
+    $st  = $_POST['status']          ?? 'Pending';
+
+    $allowed_status = ['Pending', 'In Progress', 'Completed', 'On Hold'];
+    if (!in_array($st, $allowed_status)) $st = 'Pending';
+
+    $stmt = mysqli_prepare($conn,
+        "INSERT INTO Phases
+             (ProjectID, PhaseName, StartDate, EndDate, PhaseOrder, Status)
+         VALUES (?, ?, ?, ?, ?, ?)"
+    );
+
+    mysqli_stmt_bind_param($stmt, 'isssис',
+        $pid, $pn, $sd, $ed, $ord, $st
+    );
+    mysqli_stmt_execute($stmt);
+    mysqli_stmt_close($stmt);
+
+    $msg = 'success';
 }
 if(isset($_GET['delete'])){
     mysqli_query($conn,"DELETE FROM Phases WHERE PhaseID=".(int)$_GET['delete']);

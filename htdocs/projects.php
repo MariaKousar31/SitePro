@@ -1,20 +1,36 @@
 <?php include 'init.php'; ?>
 <?php
 $msg='';
-if($_POST && isset($_POST['name'])){
-    $name=mysqli_real_escape_string($conn,$_POST['name']);
-    $loc=mysqli_real_escape_string($conn,$_POST['location']??'');
-    $start=$_POST['start']??'';
-    $end=$_POST['end']??'';
-    $cid=(int)($_POST['client']??0);
-    $conid=(int)($_POST['contractor']??0);
-    $budget=(float)($_POST['budget']??0);
-    $status=mysqli_real_escape_string($conn,$_POST['status']??'Planning');
-    $desc=mysqli_real_escape_string($conn,$_POST['desc']??'');
-    $cid_val=$cid>0?$cid:'NULL';
-    $conid_val=$conid>0?$conid:'NULL';
-    mysqli_query($conn,"INSERT INTO projects(ProjectName,Location,StartDate,EndDate,ClientID,ContractorID,Budget,Status,Description,user_id) VALUES('$name','$loc','$start','$end',$cid_val,$conid_val,$budget,'$status','$desc',$user_id)");
-    $msg='success';
+if ($_POST && isset($_POST['name'])) {
+    $name   = $_POST['name']                ?? '';
+    $loc    = $_POST['location']            ?? '';
+    $start  = $_POST['start']               ?? '';
+    $end    = $_POST['end']                 ?? '';
+    $cid    = (int)($_POST['client']        ?? 0);
+    $conid  = (int)($_POST['contractor']    ?? 0);
+    $budget = (float)($_POST['budget']      ?? 0);
+    $status = $_POST['status']              ?? 'Planning';
+    $desc   = $_POST['desc']               ?? '';
+
+    // Convert 0 to null so foreign keys store NULL rather than 0
+    $cid_val   = $cid   > 0 ? $cid   : null;
+    $conid_val = $conid > 0 ? $conid : null;
+
+    $stmt = mysqli_prepare($conn,
+        "INSERT INTO projects
+             (ProjectName, Location, StartDate, EndDate,
+              ClientID, ContractorID, Budget, Status, Description, user_id)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+    );
+
+    mysqli_stmt_bind_param($stmt, 'ssssiiдssi',
+        $name, $loc, $start, $end,
+        $cid_val, $conid_val, $budget, $status, $desc, $user_id
+    );
+    mysqli_stmt_execute($stmt);
+    mysqli_stmt_close($stmt);
+
+    $msg = 'success';
 }
 if(isset($_GET['delete'])){
     mysqli_query($conn,"DELETE FROM projects WHERE user_id=$user_id AND ProjectID=".(int)$_GET['delete']);

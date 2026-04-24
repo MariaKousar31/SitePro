@@ -1,15 +1,25 @@
 <?php include 'init.php'; ?>
 <?php
 $msg='';
-if($_POST && isset($_POST['inspector'])){
-    $pid=(int)$_POST['project'];
-    $ins=mysqli_real_escape_string($conn,$_POST['inspector']);
-    $dt=$_POST['inspdate']??'';
-    $tp=mysqli_real_escape_string($conn,$_POST['type']??'Environmental');
-    $rs=mysqli_real_escape_string($conn,$_POST['result']??'Pass');
-    $no=mysqli_real_escape_string($conn,$_POST['notes']??'');
-    mysqli_query($conn,"INSERT INTO inspections(ProjectID,InspectorName,InspectionDate,InspectionType,Result,Notes) VALUES($pid,'$ins','$dt','$tp','$rs','$no')");
-    $msg='success';
+if ($_POST && isset($_POST['inspector'])) {
+    $pid = (int)$_POST['project'];
+    $ins = $_POST['inspector']         ?? '';
+    $dt  = $_POST['inspdate']          ?? '';
+    $tp  = $_POST['type']              ?? 'Environmental';
+    $rs  = $_POST['result']            ?? 'Pass';
+    $no  = $_POST['notes']             ?? '';
+
+    $stmt = mysqli_prepare($conn,
+        "INSERT INTO inspections
+             (ProjectID, InspectorName, InspectionDate, InspectionType, Result, Notes)
+         VALUES (?, ?, ?, ?, ?, ?)"
+    );
+
+    mysqli_stmt_bind_param($stmt, 'isssss', $pid, $ins, $dt, $tp, $rs, $no);
+    mysqli_stmt_execute($stmt);
+    mysqli_stmt_close($stmt);
+
+    $msg = 'success';
 }
 if(isset($_GET['delete'])){
     mysqli_query($conn,"DELETE FROM inspections WHERE InspectionID=".(int)$_GET['delete']);

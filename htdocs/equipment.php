@@ -10,14 +10,25 @@ if($_POST && isset($_POST['ename'])){
     mysqli_query($conn,"INSERT INTO equipment(EquipmentName,Type,FuelType,CO2PerHour,DailyRate) VALUES('$n','$t','$f',$c,$d)");
     $msg='equipment';
 }
-if($_POST && isset($_POST['assign'])){
-    $pid=(int)$_POST['proj'];
-    $eid=(int)$_POST['equip'];
-    $h=(float)$_POST['hours'];
-    $sd=$_POST['sd']??'';
-    $ed=$_POST['ed']??'';
-    mysqli_query($conn,"INSERT INTO projectequipment(ProjectID,EquipmentID,HoursUsed,StartDate,EndDate) VALUES($pid,$eid,$h,'$sd','$ed') ON DUPLICATE KEY UPDATE HoursUsed=HoursUsed+$h");
-    $msg='assigned';
+if ($_POST && isset($_POST['assign'])) {
+    $pid = (int)$_POST['proj'];
+    $eid = (int)$_POST['equip'];
+    $h   = (float)$_POST['hours'];
+    $sd  = $_POST['sd'] ?? '';
+    $ed  = $_POST['ed'] ?? '';
+
+    $stmt = mysqli_prepare($conn,
+        "INSERT INTO projectequipment
+             (ProjectID, EquipmentID, HoursUsed, StartDate, EndDate)
+         VALUES (?, ?, ?, ?, ?)
+         ON DUPLICATE KEY UPDATE HoursUsed = HoursUsed + VALUES(HoursUsed)"
+    );
+
+    mysqli_stmt_bind_param($stmt, 'iidss', $pid, $eid, $h, $sd, $ed);
+    mysqli_stmt_execute($stmt);
+    mysqli_stmt_close($stmt);
+
+    $msg = 'assigned';
 }
 if(isset($_GET['delete'])){
     mysqli_query($conn,"DELETE FROM equipment WHERE EquipmentID=".(int)$_GET['delete']);

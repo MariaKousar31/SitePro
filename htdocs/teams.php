@@ -10,16 +10,26 @@ if($_POST && isset($_POST['teamname'])){
     $msg='team';
 }
 // Add member
-if($_POST && isset($_POST['fullname'])){
-    $tid=(int)$_POST['team'];
-    $fn=mysqli_real_escape_string($conn,$_POST['fullname']);
-    $des=mysqli_real_escape_string($conn,$_POST['designation']??'');
-    $em=mysqli_real_escape_string($conn,$_POST['email']??'');
-    $ph=mysqli_real_escape_string($conn,substr(preg_replace('/\D/','',$_POST['phone']??''),0,11));
-    $jd=$_POST['joindate']??'';
-    $hr=(float)($_POST['hourlyrate']??0);
-    mysqli_query($conn,"INSERT INTO teammembers(TeamID,FullName,Designation,Email,Phone,JoinDate,HourlyRate) VALUES($tid,'$fn','$des','$em','$ph','$jd',$hr)");
-    $msg='member';
+if ($_POST && isset($_POST['add_member'])) {
+    $tid = (int)$_POST['team'];
+    $fn  = $_POST['fullname']    ?? '';
+    $des = $_POST['designation'] ?? '';
+    $em  = $_POST['email']       ?? '';
+    $ph  = $_POST['phone']       ?? '';
+    $jd  = $_POST['joindate']    ?? '';
+    $hr  = (float)($_POST['hourlyrate'] ?? 0);
+
+    $stmt = mysqli_prepare($conn,
+        "INSERT INTO teammembers
+             (TeamID, FullName, Designation, Email, Phone, JoinDate, HourlyRate)
+         VALUES (?, ?, ?, ?, ?, ?, ?)"
+    );
+
+    mysqli_stmt_bind_param($stmt, 'isssssd', $tid, $fn, $des, $em, $ph, $jd, $hr);
+    mysqli_stmt_execute($stmt);
+    mysqli_stmt_close($stmt);
+
+    $msg = 'member';
 }
 if(isset($_GET['delteam'])){
     mysqli_query($conn,"DELETE FROM teams WHERE TeamID=".(int)$_GET['delteam']);
