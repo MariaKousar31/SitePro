@@ -1,6 +1,6 @@
 <?php
 session_start();
-include 'db.php';
+include_once 'db.php';
 
 if (!isset($_SESSION['user_id'])) {
     header("Location: landing.php");
@@ -9,4 +9,3 @@ if (!isset($_SESSION['user_id'])) {
 
 $user_id = $_SESSION['user_id'];
 $role = $_SESSION['role'];
-?>

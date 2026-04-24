@@ -1,4 +1,4 @@
-<?php include 'init.php'; ?>
+<?php include_once 'init.php'; ?>
 <?php
 // Fetch all project CO2 data
 $projectData = [];

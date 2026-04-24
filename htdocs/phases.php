@@ -1,4 +1,4 @@
-<?php include 'init.php'; ?>
+<?php include_once 'init.php'; ?>
 <?php
 $msg='';
 if ($_POST) {
