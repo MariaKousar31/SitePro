@@ -12,10 +12,10 @@ if (isset($_POST['update_status'])) {
     $st  = trim($_POST['status'] ?? '');
 
     // Whitelist check against the single source of truth
-    if (!in_array($st, CERT_STATUSES, true)) {
-        header("Location: certifications.php?error=invalid_status");
-        exit;
-    }
+if (!in_array($st, CERT_STATUSES, true)) {
+    header("Location: certifications.php?error=invalid_status");
+    exit;
+}
 
     $stmt = mysqli_prepare($conn,
         "UPDATE projectcertifications
@@ -208,8 +208,13 @@ $links=mysqli_query($conn,"SELECT pc.*,p.ProjectName as PName,c.CertificationTyp
           <thead><tr><th>Project</th><th>Certification</th><th>Issuing Body</th><th>Score</th><th>Status</th><th>Awarded</th><th>Expiry</th><th>Action</th></tr></thead>
           <tbody>
           <?php while($r=mysqli_fetch_assoc($links)):
-            $st=$r['Status'];
-            $cls=$st==='Awarded'?'status-awarded':($st==='Expired'?'status-expired':($st==='In Review'?'status-review':'status-applied'));?>
+$statusClasses = [
+    CERT_STATUSES[0] => 'status-applied',
+    CERT_STATUSES[1] => 'status-review',
+    CERT_STATUSES[2] => 'status-awarded',
+    CERT_STATUSES[3] => 'status-expired'
+];
+$cls = $statusClasses[$st] ?? 'status-applied';
           <tr>
             <td><?=htmlspecialchars($r['PName'])?></td>
             <td style="font-weight:600"><?=htmlspecialchars($r['CertificationType'])?></td>
