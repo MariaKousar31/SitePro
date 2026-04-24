@@ -31,7 +31,7 @@ if ($_POST && isset($_POST['cert_award'])) {
     $sc  = (float)($_POST['score'] ?? 0);
     $st  = trim($_POST['status'] ?? 'Applied');
     $allowed = ['Applied','In Review','Awarded','Expired'];
-    if (!in_array($st, $allowed, true)) $st = 'Applied';
+    if (!in_array($st, $allowed, true)){ $st = 'Applied';}
 
     $stmt = mysqli_prepare($conn,
         "INSERT INTO projectcertifications (ProjectID,CertID,AwardedDate,ExpiryDate,Score,Status,user_id)
