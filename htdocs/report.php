@@ -13,7 +13,7 @@ $res = mysqli_query($conn, "
   GROUP BY p.ProjectID
   ORDER BY TotalCO2 DESC
 ");
-while ($r = mysqli_fetch_assoc($res)) $projectData[] = $r;
+while ($r = mysqli_fetch_assoc($res)) {$projectData[] = $r;}
 
 // Fetch material breakdown
 $matBreakdown = [];
@@ -26,7 +26,7 @@ $mres = mysqli_query($conn, "
   GROUP BY m.MaterialID
   ORDER BY CO2 DESC
 ");
-while ($r = mysqli_fetch_assoc($mres)) $matBreakdown[] = $r;
+while ($r = mysqli_fetch_assoc($mres)) {$matBreakdown[] = $r;}
 
 // Fetch timeline data (by calcdate)
 $timeline = [];
@@ -40,7 +40,7 @@ $tres = mysqli_query($conn, "
   ORDER BY d ASC
   LIMIT 30
 ");
-while ($r = mysqli_fetch_assoc($tres)) $timeline[] = $r;
+while ($r = mysqli_fetch_assoc($tres)) {$timeline[] = $r;}
 
 $totalCO2 = array_sum(array_column($projectData, 'TotalCO2'));
 $totalProjects = count($projectData);

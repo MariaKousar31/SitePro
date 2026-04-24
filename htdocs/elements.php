@@ -152,7 +152,7 @@ $materials=mysqli_query($conn,"SELECT m.*,mc.CategoryName FROM materials m LEFT 
           WHERE p.user_id=$user_id ORDER BY e.ElementID DESC
         ");
         $maxCO2=mysqli_fetch_assoc(mysqli_query($conn,"SELECT MAX(e.Volume*m.EmissionFactor) mx FROM elements e JOIN materials m ON e.MaterialID=m.MaterialID JOIN projects p ON e.ProjectID=p.ProjectID WHERE p.user_id=$user_id"))['mx']??1;
-        if($maxCO2==0)$maxCO2=1;
+        if($maxCO2==0){$maxCO2=1;}
         if(mysqli_num_rows($elems)===0):?>
           <div class="empty-state"><div style="font-size:48px;opacity:.4;margin-bottom:16px">⚗️</div>No elements logged yet.</div>
         <?php else:?>

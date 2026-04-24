@@ -19,7 +19,7 @@ if(isset($_GET['delete'])){
 $categories=mysqli_query($conn,"SELECT * FROM materialcategories ORDER BY CategoryName");
 $mats=mysqli_query($conn,"SELECT m.*,mc.CategoryName FROM materials m LEFT JOIN materialcategories mc ON m.CategoryID=mc.CategoryID WHERE m.user_id=$user_id ORDER BY m.MaterialID DESC");
 $maxFactor=mysqli_fetch_assoc(mysqli_query($conn,"SELECT MAX(EmissionFactor) mx FROM materials WHERE user_id=$user_id"))['mx']??1;
-if($maxFactor==0)$maxFactor=1;
+if($maxFactor==0){$maxFactor=1;}
 ?>
 <!DOCTYPE html><html lang="en"><head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">

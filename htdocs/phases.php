@@ -10,7 +10,7 @@ if ($_POST) {
     $st  = $_POST['status']          ?? 'Pending';
 
     $allowed_status = ['Pending', 'In Progress', 'Completed', 'On Hold'];
-    if (!in_array($st, $allowed_status)) $st = 'Pending';
+    if (!in_array($st, $allowed_status)) {$st = 'Pending';}
 
     $stmt = mysqli_prepare($conn,
         "INSERT INTO Phases
