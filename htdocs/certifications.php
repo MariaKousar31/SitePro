@@ -2,17 +2,33 @@
 <?php include 'init.php'; ?>
 
 <?php
-$msg='';
-if(isset($_POST['update_status'])){
-    $pid = (int)$_POST['pid'];
-    $cid = (int)$_POST['cid'];
-    $st  = mysqli_real_escape_string($conn, $_POST['status']);
+// Define statuses once — no magic string duplication
+define('CERT_STATUSES', ['Applied', 'In Review', 'Awarded', 'Expired']);
 
-    mysqli_query($conn,"
-        UPDATE projectcertifications
-        SET Status='$st'
-        WHERE ProjectID=$pid AND CertID=$cid AND user_id=$user_id
-    ");
+$msg = '';
+
+if (isset($_POST['update_status'])) {
+    $pid = (int)($_POST['pid'] ?? 0);
+    $cid = (int)($_POST['cid'] ?? 0);
+    $st  = trim($_POST['status'] ?? '');
+
+    // Whitelist check against the single source of truth
+    if (!in_array($st, CERT_STATUSES, true)) {
+        header("Location: certifications.php?error=invalid_status");
+        exit;
+    }
+
+    $stmt = mysqli_prepare($conn,
+        "UPDATE projectcertifications
+         SET Status = ?
+         WHERE ProjectID = ? AND CertID = ? AND user_id = ?"
+    );
+
+    if ($stmt) {
+        mysqli_stmt_bind_param($stmt, "siii", $st, $pid, $cid, $user_id);
+        mysqli_stmt_execute($stmt);
+        mysqli_stmt_close($stmt);
+    }
 
     header("Location: certifications.php?updated=1");
     exit;
