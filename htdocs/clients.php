@@ -8,8 +8,14 @@ if($_POST && isset($_POST['company'])){
     $ph=mysqli_real_escape_string($conn,substr(preg_replace('/\D/','',$_POST['phone']??''),0,11));
     $ad=mysqli_real_escape_string($conn,$_POST['address']??'');
     $in=mysqli_real_escape_string($conn,$_POST['industry']??'');
-    mysqli_query($conn,"INSERT INTO clients(CompanyName,ContactPerson,Email,Phone,Address,Industry,user_id) VALUES('$co','$cp','$em','$ph','$ad','$in',$user_id)");
-    $msg='success';
+$stmt = mysqli_prepare($conn, "INSERT INTO clients 
+(CompanyName, ContactPerson, Email, Phone, Address, Industry, user_id) 
+VALUES (?, ?, ?, ?, ?, ?, ?)");
+
+mysqli_stmt_bind_param($stmt, "ssssssi", $co, $cp, $em, $ph, $ad, $in, $user_id);
+
+mysqli_stmt_execute($stmt);
+  $msg='success';
 }
 if(isset($_GET['delete'])){
     mysqli_query($conn,"DELETE FROM clients WHERE user_id=$user_id AND ClientID=".(int)$_GET['delete']);
