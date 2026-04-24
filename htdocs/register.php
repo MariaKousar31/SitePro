@@ -39,7 +39,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <!DOCTYPE html><html lang="en"><head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>Register — SitePro CE</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/fonts.css">
 <style>
   :root{--bg:#eef2f7;--surface:#fff;--border:#dde3ec;--accent:#1a5c96;--text:#1a2332;--muted:#6b7a90;--danger:#c0392b;--success:#1a7a4a;--gold:#f0a500;--header-bg:#1a2d4a;}
   *{margin:0;padding:0;box-sizing:border-box;}

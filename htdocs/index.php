@@ -9,7 +9,7 @@ include_once 'init.php';
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>SitePro CE — Civil Engineering Dashboard</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/fonts.css">
 <style>
   :root{--bg:#eef2f7;--surface:#ffffff;--surface2:#f4f7fb;--border:#dde3ec;--accent:#1a5c96;--accent-light:#e8f0f9;--text:#1a2332;--muted:#6b7a90;--header-bg:#1a2d4a;--gold:#f0a500;--danger:#c0392b;--success:#1a7a4a;}
   *{margin:0;padding:0;box-sizing:border-box;}
