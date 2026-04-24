@@ -1,4 +1,3 @@
-
 <?php include 'init.php'; ?>
 
 <?php
@@ -6,17 +5,24 @@ $msg='';
 if(isset($_POST['update_status'])){
     $pid = (int)$_POST['pid'];
     $cid = (int)$_POST['cid'];
-    $st  = mysqli_real_escape_string($conn, $_POST['status']);
+    $st  = $_POST['status'] ?? 'Applied';
 
-    mysqli_query($conn,"
-        UPDATE projectcertifications 
-        SET Status='$st'
-        WHERE ProjectID=$pid AND CertID=$cid AND user_id=$user_id
-    ");
+    $allowed_status = ['Applied', 'In Review', 'Awarded', 'Expired'];
+    if (!in_array($st, $allowed_status)){ $st = 'Applied';}
+
+    $stmt = mysqli_prepare($conn,
+        "UPDATE projectcertifications
+         SET Status = ?
+         WHERE ProjectID = ? AND CertID = ? AND user_id = ?"
+    );
+    mysqli_stmt_bind_param($stmt, 'siii', $st, $pid, $cid, $user_id);
+    mysqli_stmt_execute($stmt);
+    mysqli_stmt_close($stmt);
 
     header("Location: certifications.php?updated=1");
     exit;
 }
+
 // Award certification to project
 if ($_POST && isset($_POST['cert_award'])) {
     $pid = (int)$_POST['project'];
@@ -26,7 +32,7 @@ if ($_POST && isset($_POST['cert_award'])) {
     $sc  = (float)($_POST['score'] ?? 0);
     $st  = $_POST['status']  ?? 'Applied';
 
-    $allowed_status = ['Applied', 'In Progress', 'Certified', 'Expired'];
+    $allowed_status = ['Applied', 'In Review', 'Awarded', 'Expired'];
     if (!in_array($st, $allowed_status)){ $st = 'Applied';}
 
     $stmt = mysqli_prepare($conn,
@@ -35,21 +41,32 @@ if ($_POST && isset($_POST['cert_award'])) {
          VALUES (?, ?, ?, ?, ?, ?, ?)
          ON DUPLICATE KEY UPDATE Status = VALUES(Status), Score = VALUES(Score)"
     );
-
     mysqli_stmt_bind_param($stmt, 'iissdsi', $pid, $cid, $ad, $ex, $sc, $st, $user_id);
     mysqli_stmt_execute($stmt);
     mysqli_stmt_close($stmt);
 
     $msg = 'success';
 }
+
 if(isset($_GET['delete'])){
-    $p=(int)$_GET['p'];$c=(int)$_GET['c'];
-    mysqli_query($conn,"DELETE FROM projectcertifications WHERE ProjectID=$p AND CertID=$c AND user_id=$user_id");
-    header("Location: certifications.php?deleted=1");exit;
+    $p = (int)$_GET['p'];
+    $c = (int)$_GET['c'];
+
+    $stmt = mysqli_prepare($conn,
+        "DELETE FROM projectcertifications
+         WHERE ProjectID = ? AND CertID = ? AND user_id = ?"
+    );
+    mysqli_stmt_bind_param($stmt, 'iii', $p, $c, $user_id);
+    mysqli_stmt_execute($stmt);
+    mysqli_stmt_close($stmt);
+
+    header("Location: certifications.php?deleted=1");
+    exit;
 }
-$projects=mysqli_query($conn,"SELECT ProjectID,ProjectName FROM projects WHERE user_id=$user_id ORDER BY ProjectName");
-$certs=mysqli_query($conn,"SELECT * FROM certifications ORDER BY CertificationType");
-$links=mysqli_query($conn,"SELECT pc.*,p.ProjectName as PName,c.CertificationType,c.IssuingBody FROM projectcertifications pc JOIN projects p ON pc.ProjectID=p.ProjectID JOIN certifications c ON pc.CertID=c.CertificationID WHERE pc.user_id=$user_id ORDER BY pc.AwardedDate DESC");
+
+$projects = mysqli_query($conn,"SELECT ProjectID,ProjectName FROM projects WHERE user_id=$user_id ORDER BY ProjectName");
+$certs    = mysqli_query($conn,"SELECT * FROM certifications ORDER BY CertificationType");
+$links    = mysqli_query($conn,"SELECT pc.*,p.ProjectName as PName,c.CertificationType,c.IssuingBody FROM projectcertifications pc JOIN projects p ON pc.ProjectID=p.ProjectID JOIN certifications c ON pc.CertID=c.CertificationID WHERE pc.user_id=$user_id ORDER BY pc.AwardedDate DESC");
 ?>
 <!DOCTYPE html><html lang="en"><head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
@@ -107,17 +124,17 @@ $links=mysqli_query($conn,"SELECT pc.*,p.ProjectName as PName,c.CertificationTyp
   .topnav .back-btn{margin-left:18px;display:inline-flex;align-items:center;gap:5px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:6px;padding:5px 13px;text-decoration:none;color:rgba(255,255,255,.85);font-size:12px;font-weight:500;transition:background .2s;}
   .topnav .back-btn:hover{background:rgba(255,255,255,.2);}
   .topnav .bc{margin-left:auto;font-size:11px;color:rgba(255,255,255,.45);letter-spacing:1px;}
-
 </style>
 </head>
 <body>
 <div class="layout">
   <nav class="topnav">
     <a href="index.php" class="brand"><span class="badge">CE</span> SitePro</a>
-  <a href="index.php" class="back-btn">&#8592; Dashboard</a>
+    <a href="index.php" class="back-btn">&#8592; Dashboard</a>
     <div class="page-title">Project <span>Certifications</span></div>
     <div class="bc">HOME / CERTIFICATIONS</div>
   </nav>
+
   <?php if($msg==='success'):?><div class="alert alert-success">✓ Certification record saved</div><?php endif;?>
   <?php if(isset($_GET['deleted'])):?><div class="alert alert-danger">Record removed.</div><?php endif;?>
 
@@ -140,36 +157,59 @@ $links=mysqli_query($conn,"SELECT pc.*,p.ProjectName as PName,c.CertificationTyp
       <div class="card-body">
         <form method="POST">
           <input type="hidden" name="cert_award" value="1">
-          <div class="field"><label>Project</label>
-            <select name="project" required>
+
+          <div class="field">
+            <label for="cert-project">Project</label>
+            <select id="cert-project" name="project" required>
               <option value="">— Select Project —</option>
               <?php mysqli_data_seek($projects,0);while($r=mysqli_fetch_assoc($projects)):?>
               <option value="<?=$r['ProjectID']?>"><?=htmlspecialchars($r['ProjectName'])?></option>
               <?php endwhile;?>
             </select>
           </div>
-          <div class="field"><label>Certification</label>
-            <select name="cert" required>
+
+          <div class="field">
+            <label for="cert-type">Certification</label>
+            <select id="cert-type" name="cert" required>
               <option value="">— Select —</option>
               <?php mysqli_data_seek($certs,0);while($r=mysqli_fetch_assoc($certs)):?>
-<option value="<?=$r['CertificationID']?>">
-  <?=htmlspecialchars($r['CertificationType'])?> (<?=htmlspecialchars($r['IssuingBody'])?>)
-</option>
+              <option value="<?=$r['CertificationID']?>">
+                <?=htmlspecialchars($r['CertificationType'])?> (<?=htmlspecialchars($r['IssuingBody'])?>)
+              </option>
               <?php endwhile;?>
             </select>
           </div>
-          <div class="field"><label>Awarded Date</label><input name="awarded" type="date"></div>
-          <div class="field"><label>Expiry Date</label><input name="expiry" type="date"></div>
-          <div class="field"><label>Score / Points</label><input name="score" type="number" step="0.01" placeholder="85.0"></div>
-          <div class="field"><label>Status</label>
-            <select name="status">
-              <option>Applied</option><option>In Review</option><option>Awarded</option><option>Expired</option>
+
+          <div class="field">
+            <label for="cert-awarded">Awarded Date</label>
+            <input id="cert-awarded" name="awarded" type="date">
+          </div>
+
+          <div class="field">
+            <label for="cert-expiry">Expiry Date</label>
+            <input id="cert-expiry" name="expiry" type="date">
+          </div>
+
+          <div class="field">
+            <label for="cert-score">Score / Points</label>
+            <input id="cert-score" name="score" type="number" step="0.01" placeholder="85.0">
+          </div>
+
+          <div class="field">
+            <label for="cert-status">Status</label>
+            <select id="cert-status" name="status">
+              <option value="Applied">Applied</option>
+              <option value="In Review">In Review</option>
+              <option value="Awarded">Awarded</option>
+              <option value="Expired">Expired</option>
             </select>
           </div>
+
           <button class="btn-primary" type="submit">SAVE CERTIFICATION</button>
         </form>
       </div>
     </div>
+
     <div class="card" style="animation:fadeUp .5s ease .15s both">
       <div class="card-header"><span>📋</span><h3>Certification Records</h3></div>
       <div class="table-wrap">
@@ -177,39 +217,49 @@ $links=mysqli_query($conn,"SELECT pc.*,p.ProjectName as PName,c.CertificationTyp
           <div class="empty-state">No certifications recorded yet.</div>
         <?php else:?>
         <table>
-          <thead><tr><th>Project</th><th>Certification</th><th>Issuing Body</th><th>Score</th><th>Status</th><th>Awarded</th><th>Expiry</th><th>Action</th></tr></thead>
+          <thead>
+            <tr>
+              <th>Project</th><th>Certification</th><th>Issuing Body</th>
+              <th>Score</th><th>Status</th><th>Awarded</th><th>Expiry</th><th>Action</th>
+            </tr>
+          </thead>
           <tbody>
           <?php while($r=mysqli_fetch_assoc($links)):
-            $st=$r['Status'];
-            $cls=$st==='Awarded'?'status-awarded':($st==='Expired'?'status-expired':($st==='In Review'?'status-review':'status-applied'));?>
+            $st  = $r['Status'];
+            $cls = $st==='Awarded' ? 'status-awarded' : ($st==='Expired' ? 'status-expired' : ($st==='In Review' ? 'status-review' : 'status-applied'));
+          ?>
           <tr>
             <td><?=htmlspecialchars($r['PName'])?></td>
             <td style="font-weight:600"><?=htmlspecialchars($r['CertificationType'])?></td>
             <td style="color:var(--muted);font-size:11px"><?=htmlspecialchars($r['IssuingBody'])?></td>
-<td style="color:var(--accent)">
-    <?= isset($r['Score']) ? $r['Score'] : '—' ?>
-</td>
+            <td style="color:var(--accent)"><?= isset($r['Score']) ? htmlspecialchars($r['Score']) : '—' ?></td>
             <td>
-  <form method="POST" style="display:flex;gap:6px;align-items:center;">
-    <input type="hidden" name="pid" value="<?=$r['ProjectID']?>">
-    <input type="hidden" name="cid" value="<?=$r['CertID']?>">
-
-    <select name="status" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:5px;border-radius:6px;font-size:11px;">
-      <option <?= $st=='Applied'?'selected':'' ?>>Applied</option>
-      <option <?= $st=='In Review'?'selected':'' ?>>In Review</option>
-      <option <?= $st=='Awarded'?'selected':'' ?>>Awarded</option>
-      <option <?= $st=='Expired'?'selected':'' ?>>Expired</option>
-    </select>
-
-    <button type="submit" name="update_status"
-      style="background:var(--accent);border:none;padding:5px 8px;border-radius:6px;font-size:10px;cursor:pointer;">
-      Save
-    </button>
-  </form>
-</td>
-            <td style="color:var(--muted)"><?=$r['AwardedDate']??'—'?></td>
-            <td style="color:var(--muted)"><?=$r['ExpiryDate']??'—'?></td>
-            <td><a href="?delete=1&p=<?=$r['ProjectID']?>&c=<?=$r['CertID']?>" class="del-btn" onclick="return confirm('Remove?')">Remove</a></td>
+              <form method="POST" style="display:flex;gap:6px;align-items:center;">
+                <input type="hidden" name="pid" value="<?=(int)$r['ProjectID']?>">
+                <input type="hidden" name="cid" value="<?=(int)$r['CertID']?>">
+                <label for="status-<?=(int)$r['ProjectID']?>-<?=(int)$r['CertID']?>" class="sr-only">Status</label>
+                <select
+                  id="status-<?=(int)$r['ProjectID']?>-<?=(int)$r['CertID']?>"
+                  name="status"
+                  style="background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:5px;border-radius:6px;font-size:11px;">
+                  <option value="Applied"   <?= $st==='Applied'   ? 'selected' : '' ?>>Applied</option>
+                  <option value="In Review" <?= $st==='In Review' ? 'selected' : '' ?>>In Review</option>
+                  <option value="Awarded"   <?= $st==='Awarded'   ? 'selected' : '' ?>>Awarded</option>
+                  <option value="Expired"   <?= $st==='Expired'   ? 'selected' : '' ?>>Expired</option>
+                </select>
+                <button type="submit" name="update_status"
+                  style="background:var(--accent);border:none;color:#fff;padding:5px 8px;border-radius:6px;font-size:10px;cursor:pointer;">
+                  Save
+                </button>
+              </form>
+            </td>
+            <td style="color:var(--muted)"><?=htmlspecialchars($r['AwardedDate'] ?? '—')?></td>
+            <td style="color:var(--muted)"><?=htmlspecialchars($r['ExpiryDate']  ?? '—')?></td>
+            <td>
+              <a href="?delete=1&p=<?=(int)$r['ProjectID']?>&c=<?=(int)$r['CertID']?>"
+                 class="del-btn"
+                 onclick="return confirm('Remove?')">Remove</a>
+            </td>
           </tr>
           <?php endwhile;?>
           </tbody>
@@ -219,4 +269,5 @@ $links=mysqli_query($conn,"SELECT pc.*,p.ProjectName as PName,c.CertificationTyp
     </div>
   </div>
 </div>
-</body></html>
+</body>
+</html>
