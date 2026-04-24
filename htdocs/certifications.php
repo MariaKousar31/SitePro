@@ -3,16 +3,29 @@
 
 <?php
 $msg='';
-if(isset($_POST['update_status'])){
-    $pid = (int)$_POST['pid'];
-    $cid = (int)$_POST['cid'];
-    $st  = mysqli_real_escape_string($conn, $_POST['status']);
+if (isset($_POST['update_status'])) {
+    $pid = (int)($_POST['pid'] ?? 0);
+    $cid = (int)($_POST['cid'] ?? 0);
+    $st  = trim($_POST['status'] ?? '');
 
-    mysqli_query($conn,"
-        UPDATE projectcertifications 
-        SET Status='$st'
-        WHERE ProjectID=$pid AND CertID=$cid AND user_id=$user_id
-    ");
+    // Whitelist allowed status values — never trust user input directly
+    $allowed = ['Active', 'Pending', 'Expired', 'Revoked'];
+    if (!in_array($st, $allowed, true)) {
+        header("Location: certifications.php?error=invalid_status");
+        exit;
+    }
+
+    $stmt = mysqli_prepare($conn,
+        "UPDATE projectcertifications
+         SET Status = ?
+         WHERE ProjectID = ? AND CertID = ? AND user_id = ?"
+    );
+
+    if ($stmt) {
+        mysqli_stmt_bind_param($stmt, "siii", $st, $pid, $cid, $user_id);
+        mysqli_stmt_execute($stmt);
+        mysqli_stmt_close($stmt);
+    }
 
     header("Location: certifications.php?updated=1");
     exit;
