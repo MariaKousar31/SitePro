@@ -236,9 +236,14 @@ $links=mysqli_query($conn,"SELECT pc.*,p.ProjectName as PName,c.CertificationTyp
           </thead>
           <tbody>
           <?php while($r=mysqli_fetch_assoc($links)):
-            $st  = $r['Status'];
-            $cls = $st==='Awarded' ? 'status-awarded' : ($st==='Expired' ? 'status-expired' : ($st==='In Review' ? 'status-review' : 'status-applied'));
-          ?>
+$statusClasses = [
+    CERT_STATUSES[0] => 'status-applied',
+    CERT_STATUSES[1] => 'status-review',
+    CERT_STATUSES[2] => 'status-awarded',
+    CERT_STATUSES[3] => 'status-expired'
+];
+
+$cls = $statusClasses[$st] ?? 'status-applied';
           <tr>
             <td><?=htmlspecialchars($r['PName'])?></td>
             <td style="font-weight:600"><?=htmlspecialchars($r['CertificationType'])?></td>
