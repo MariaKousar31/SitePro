@@ -21,7 +21,7 @@ if (isset($_GET['delete'])) {
 
     $clientId = (int) $_GET['delete'];
 
-    $stmt = mysqli_prepare($conn, 
+    $stmt = mysqli_prepare($conn,
         "DELETE FROM clients WHERE user_id = ? AND ClientID = ?"
     );
 
@@ -128,8 +128,8 @@ if (isset($_GET['delete'])) {
 $stmt = $conn->prepare("
     SELECT c.*, COUNT(p.ClientID) AS proj_count
     FROM clients c
-    LEFT JOIN projects p 
-        ON p.ClientID = c.ClientID 
+    LEFT JOIN projects p
+        ON p.ClientID = c.ClientID
        AND p.user_id = ?
     WHERE c.user_id = ?
     GROUP BY c.ClientID
