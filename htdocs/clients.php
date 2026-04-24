@@ -125,7 +125,20 @@ if (isset($_GET['delete'])) {
       <div class="card-header"><span>&#128203;</span><h3>My Clients</h3></div>
       <div class="table-wrap">
         <?php
-        $rows=mysqli_query($conn,"SELECT c.*,(SELECT COUNT(*) FROM projects p WHERE p.ClientID=c.ClientID AND p.user_id=$user_id) AS proj_count FROM clients c WHERE c.user_id=$user_id ORDER BY c.ClientID DESC");
+$stmt = $conn->prepare("
+    SELECT c.*, COUNT(p.ClientID) AS proj_count
+    FROM clients c
+    LEFT JOIN projects p 
+        ON p.ClientID = c.ClientID 
+       AND p.user_id = ?
+    WHERE c.user_id = ?
+    GROUP BY c.ClientID
+    ORDER BY c.ClientID DESC
+");
+
+$stmt->bind_param("ii", $user_id, $user_id);
+$stmt->execute();
+$result = $stmt->get_result();
         if(mysqli_num_rows($rows)===0):?>
           <div class="empty-state"><p style="font-size:32px">&#127970;</p><p style="margin-top:10px">No clients added yet.</p></div>
         <?php else:?>
