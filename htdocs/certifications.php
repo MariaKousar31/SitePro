@@ -58,10 +58,23 @@ if ($_POST && isset($_POST['cert_award'])) {
 
     $msg = 'success';
 }
-if(isset($_GET['delete'])){
-    $p=(int)$_GET['p'];$c=(int)$_GET['c'];
-    mysqli_query($conn,"DELETE FROM projectcertifications WHERE ProjectID=$p AND CertID=$c AND user_id=$user_id");
-    header("Location: certifications.php?deleted=1");exit;
+if (isset($_GET['delete'])) {
+    $p = (int)($_GET['p'] ?? 0);
+    $c = (int)($_GET['c'] ?? 0);
+
+    $stmt = mysqli_prepare($conn,
+        "DELETE FROM projectcertifications
+         WHERE ProjectID = ? AND CertID = ? AND user_id = ?"
+    );
+
+    if ($stmt) {
+        mysqli_stmt_bind_param($stmt, "iii", $p, $c, $user_id);
+        mysqli_stmt_execute($stmt);
+        mysqli_stmt_close($stmt);
+    }
+
+    header("Location: certifications.php?deleted=1");
+    exit;
 }
 $projects=mysqli_query($conn,"SELECT ProjectID,ProjectName FROM projects WHERE user_id=$user_id ORDER BY ProjectName");
 $certs=mysqli_query($conn,"SELECT * FROM certifications ORDER BY CertificationType");
