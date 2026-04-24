@@ -2,10 +2,11 @@
 <?php include 'init.php'; ?>
 
 <?php
-// Single source of truth — update here, everywhere updates
+// Define statuses once — no magic string duplication
 define('CERT_STATUSES', ['Applied', 'In Review', 'Awarded', 'Expired']);
 
 $msg = '';
+
 if (isset($_POST['update_status'])) {
     $pid = (int)($_POST['pid'] ?? 0);
     $cid = (int)($_POST['cid'] ?? 0);
