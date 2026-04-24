@@ -18,15 +18,26 @@ if(isset($_POST['update_status'])){
     exit;
 }
 // Award certification to project
-if($_POST && isset($_POST['cert_award'])){
-    $pid=(int)$_POST['project'];
-    $cid=(int)$_POST['cert'];
-    $ad=$_POST['awarded']??'';
-    $ex=$_POST['expiry']??'';
-    $sc=(float)($_POST['score']??0);
-    $st=mysqli_real_escape_string($conn,$_POST['status']??'Applied');
-    mysqli_query($conn,"INSERT INTO projectcertifications(ProjectID,CertID,AwardedDate,ExpiryDate,Score,Status,user_id) VALUES($pid,$cid,'$ad','$ex',$sc,'$st',$user_id) ON DUPLICATE KEY UPDATE Status='$st',Score=$sc");
-    $msg='success';
+if ($_POST && isset($_POST['cert_award'])) {
+    $pid = (int)$_POST['project'];
+    $cid = (int)$_POST['cert'];
+    $ad  = $_POST['awarded'] ?? '';
+    $ex  = $_POST['expiry']  ?? '';
+    $sc  = (float)($_POST['score'] ?? 0);
+    $st  = $_POST['status']  ?? 'Applied';
+
+    $stmt = mysqli_prepare($conn,
+        "INSERT INTO projectcertifications
+             (ProjectID, CertID, AwardedDate, ExpiryDate, Score, Status, user_id)
+         VALUES (?, ?, ?, ?, ?, ?, ?)
+         ON DUPLICATE KEY UPDATE Status = VALUES(Status), Score = VALUES(Score)"
+    );
+
+    mysqli_stmt_bind_param($stmt, 'iissdsi', $pid, $cid, $ad, $ex, $sc, $st, $user_id);
+    mysqli_stmt_execute($stmt);
+    mysqli_stmt_close($stmt);
+
+    $msg = 'success';
 }
 if(isset($_GET['delete'])){
     $p=(int)$_GET['p'];$c=(int)$_GET['c'];
