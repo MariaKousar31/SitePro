@@ -168,36 +168,59 @@ $links=mysqli_query($conn,"SELECT pc.*,p.ProjectName as PName,c.CertificationTyp
       <div class="card-body">
         <form method="POST">
           <input type="hidden" name="cert_award" value="1">
-          <div class="field"><label>Project</label>
-            <select name="project" required>
+
+          <div class="field">
+            <label for="cert-project">Project</label>
+            <select id="cert-project" name="project" required>
               <option value="">— Select Project —</option>
               <?php mysqli_data_seek($projects,0);while($r=mysqli_fetch_assoc($projects)):?>
               <option value="<?=$r['ProjectID']?>"><?=htmlspecialchars($r['ProjectName'])?></option>
               <?php endwhile;?>
             </select>
           </div>
-          <div class="field"><label>Certification</label>
-            <select name="cert" required>
+
+          <div class="field">
+            <label for="cert-type">Certification</label>
+            <select id="cert-type" name="cert" required>
               <option value="">— Select —</option>
               <?php mysqli_data_seek($certs,0);while($r=mysqli_fetch_assoc($certs)):?>
-<option value="<?=$r['CertificationID']?>">
-  <?=htmlspecialchars($r['CertificationType'])?> (<?=htmlspecialchars($r['IssuingBody'])?>)
-</option>
+              <option value="<?=$r['CertificationID']?>">
+                <?=htmlspecialchars($r['CertificationType'])?> (<?=htmlspecialchars($r['IssuingBody'])?>)
+              </option>
               <?php endwhile;?>
             </select>
           </div>
-          <div class="field"><label>Awarded Date</label><input name="awarded" type="date"></div>
-          <div class="field"><label>Expiry Date</label><input name="expiry" type="date"></div>
-          <div class="field"><label>Score / Points</label><input name="score" type="number" step="0.01" placeholder="85.0"></div>
-          <div class="field"><label>Status</label>
-            <select name="status">
-              <option>Applied</option><option>In Review</option><option>Awarded</option><option>Expired</option>
+
+          <div class="field">
+            <label for="cert-awarded">Awarded Date</label>
+            <input id="cert-awarded" name="awarded" type="date">
+          </div>
+
+          <div class="field">
+            <label for="cert-expiry">Expiry Date</label>
+            <input id="cert-expiry" name="expiry" type="date">
+          </div>
+
+          <div class="field">
+            <label for="cert-score">Score / Points</label>
+            <input id="cert-score" name="score" type="number" step="0.01" placeholder="85.0">
+          </div>
+
+          <div class="field">
+            <label for="cert-status">Status</label>
+            <select id="cert-status" name="status">
+              <option value="Applied">Applied</option>
+              <option value="In Review">In Review</option>
+              <option value="Awarded">Awarded</option>
+              <option value="Expired">Expired</option>
             </select>
           </div>
+
           <button class="btn-primary" type="submit">SAVE CERTIFICATION</button>
         </form>
       </div>
     </div>
+
     <div class="card" style="animation:fadeUp .5s ease .15s both">
       <div class="card-header"><span>📋</span><h3>Certification Records</h3></div>
       <div class="table-wrap">
@@ -205,44 +228,49 @@ $links=mysqli_query($conn,"SELECT pc.*,p.ProjectName as PName,c.CertificationTyp
           <div class="empty-state">No certifications recorded yet.</div>
         <?php else:?>
         <table>
-          <thead><tr><th>Project</th><th>Certification</th><th>Issuing Body</th><th>Score</th><th>Status</th><th>Awarded</th><th>Expiry</th><th>Action</th></tr></thead>
+          <thead>
+            <tr>
+              <th>Project</th><th>Certification</th><th>Issuing Body</th>
+              <th>Score</th><th>Status</th><th>Awarded</th><th>Expiry</th><th>Action</th>
+            </tr>
+          </thead>
           <tbody>
           <?php while($r=mysqli_fetch_assoc($links)):
-$statusClasses = [
-    CERT_STATUSES[0] => 'status-applied',
-    CERT_STATUSES[1] => 'status-review',
-    CERT_STATUSES[2] => 'status-awarded',
-    CERT_STATUSES[3] => 'status-expired'
-];
-$cls = $statusClasses[$st] ?? 'status-applied';
+            $st  = $r['Status'];
+            $cls = $st==='Awarded' ? 'status-awarded' : ($st==='Expired' ? 'status-expired' : ($st==='In Review' ? 'status-review' : 'status-applied'));
+          ?>
           <tr>
             <td><?=htmlspecialchars($r['PName'])?></td>
             <td style="font-weight:600"><?=htmlspecialchars($r['CertificationType'])?></td>
             <td style="color:var(--muted);font-size:11px"><?=htmlspecialchars($r['IssuingBody'])?></td>
-<td style="color:var(--accent)">
-    <?= isset($r['Score']) ? $r['Score'] : '—' ?>
-</td>
+            <td style="color:var(--accent)"><?= isset($r['Score']) ? htmlspecialchars($r['Score']) : '—' ?></td>
             <td>
-  <form method="POST" style="display:flex;gap:6px;align-items:center;">
-    <input type="hidden" name="pid" value="<?=$r['ProjectID']?>">
-    <input type="hidden" name="cid" value="<?=$r['CertID']?>">
-
-    <select name="status" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:5px;border-radius:6px;font-size:11px;">
-      <option <?= $st=='Applied'?'selected':'' ?>>Applied</option>
-      <option <?= $st=='In Review'?'selected':'' ?>>In Review</option>
-      <option <?= $st=='Awarded'?'selected':'' ?>>Awarded</option>
-      <option <?= $st=='Expired'?'selected':'' ?>>Expired</option>
-    </select>
-
-    <button type="submit" name="update_status"
-      style="background:var(--accent);border:none;padding:5px 8px;border-radius:6px;font-size:10px;cursor:pointer;">
-      Save
-    </button>
-  </form>
-</td>
-            <td style="color:var(--muted)"><?=$r['AwardedDate']??'—'?></td>
-            <td style="color:var(--muted)"><?=$r['ExpiryDate']??'—'?></td>
-            <td><a href="?delete=1&p=<?=$r['ProjectID']?>&c=<?=$r['CertID']?>" class="del-btn" onclick="return confirm('Remove?')">Remove</a></td>
+              <form method="POST" style="display:flex;gap:6px;align-items:center;">
+                <input type="hidden" name="pid" value="<?=(int)$r['ProjectID']?>">
+                <input type="hidden" name="cid" value="<?=(int)$r['CertID']?>">
+                <label for="status-<?=(int)$r['ProjectID']?>-<?=(int)$r['CertID']?>" class="sr-only">Status</label>
+                <select
+                  id="status-<?=(int)$r['ProjectID']?>-<?=(int)$r['CertID']?>"
+                  name="status"
+                  style="background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:5px;border-radius:6px;font-size:11px;">
+                  <option value="Applied"   <?= $st==='Applied'   ? 'selected' : '' ?>>Applied</option>
+                  <option value="In Review" <?= $st==='In Review' ? 'selected' : '' ?>>In Review</option>
+                  <option value="Awarded"   <?= $st==='Awarded'   ? 'selected' : '' ?>>Awarded</option>
+                  <option value="Expired"   <?= $st==='Expired'   ? 'selected' : '' ?>>Expired</option>
+                </select>
+                <button type="submit" name="update_status"
+                  style="background:var(--accent);border:none;color:#fff;padding:5px 8px;border-radius:6px;font-size:10px;cursor:pointer;">
+                  Save
+                </button>
+              </form>
+            </td>
+            <td style="color:var(--muted)"><?=htmlspecialchars($r['AwardedDate'] ?? '—')?></td>
+            <td style="color:var(--muted)"><?=htmlspecialchars($r['ExpiryDate']  ?? '—')?></td>
+            <td>
+              <a href="?delete=1&p=<?=(int)$r['ProjectID']?>&c=<?=(int)$r['CertID']?>"
+                 class="del-btn"
+                 onclick="return confirm('Remove?')">Remove</a>
+            </td>
           </tr>
           <?php endwhile;?>
           </tbody>
@@ -252,4 +280,5 @@ $cls = $statusClasses[$st] ?? 'status-applied';
     </div>
   </div>
 </div>
-</body></html>
+</body>
+</html>
